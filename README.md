@@ -139,6 +139,7 @@ This project is designed to be a **good tenant** of the free tier — that is wh
 
 | Symptom | Cause & fix |
 |---|---|
+| Workflow fails with **HTTP 402 Payment Required** at step 1 | HF now requires a **PRO** subscription for Docker/Gradio Spaces on free `cpu-basic` (only Static Spaces are free). Subscribe at [huggingface.co/pro](https://huggingface.co/pro) and re-run, or host the `space/` Docker image elsewhere (Railway / Render / Koyeb / VPS) |
 | Build fails at Caddy/OmniRouter download | Transient network error — **Factory rebuild** the Space (Settings) or just re-run the deploy workflow |
 | Space builds but shows "Runtime error" | Open **Logs** on the Space page; usually a missing secret — check the table above |
 | Bot silent in Telegram | 1) Token wrong? 2) `TELEGRAM_ALLOWED_USERS` missing your ID? 3) Restart the Space after adding secrets |

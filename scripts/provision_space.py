@@ -19,6 +19,11 @@ except ImportError:
     print("::error:: huggingface_hub is not installed — pip install huggingface_hub")
     sys.exit(1)
 
+try:
+    from huggingface_hub.errors import HfHubHTTPError
+except ImportError:  # very old versions — fall back to generic handling
+    HfHubHTTPError = Exception
+
 # ---------------------------------------------------------------- config
 SPACE_SECRETS = [
     "TELEGRAM_BOT_TOKEN",
@@ -124,14 +129,33 @@ def main() -> int:
 
     # ------------------------------------------------------ create repos
     print(f"[1/5] Creating (or reusing) Space {repo_id} (sdk=docker, cpu-basic, {'private' if PRIVATE_SPACE else 'public'})…")
-    url = api.create_repo(
-        repo_id=repo_id,
-        repo_type="space",
-        space_sdk="docker",
-        private=PRIVATE_SPACE,
-        exist_ok=True,
-        space_hardware="cpu-basic",
-    )
+    try:
+        url = api.create_repo(
+            repo_id=repo_id,
+            repo_type="space",
+            space_sdk="docker",
+            private=PRIVATE_SPACE,
+            exist_ok=True,
+            space_hardware="cpu-basic",
+        )
+    except HfHubHTTPError as e:
+        status = getattr(getattr(e, "response", None), "status_code", None)
+        if status == 402:
+            print("::error:: Hugging Face refused to create the Space: HTTP 402 Payment Required.")
+            print("::error:: NEW HF POLICY: Docker & Gradio Spaces on the free cpu-basic hardware now require a PRO subscription — only Static HTML Spaces remain free.")
+            print("::error:: Fix: subscribe at https://huggingface.co/pro and re-run this workflow, OR deploy the space/ Docker image on another host (Railway, Render, Koyeb, a VPS…).")
+            write_summary(
+                "## ❌ Space creation blocked by Hugging Face — HTTP 402 (Payment Required)\n\n"
+                "Hugging Face no longer hosts **Docker Spaces** on free `cpu-basic` hardware — that now requires a "
+                "**[PRO subscription](https://huggingface.co/pro)** ($9/month). Static HTML Spaces remain free, "
+                "but this stack (Caddy + Hermes agent + routers) needs Docker.\n\n"
+                "**Options**\n\n"
+                "1. **Subscribe to PRO**, then re-run this workflow — nothing else changes.\n"
+                "2. **Deploy the same image elsewhere** — the `space/` folder is a plain Docker image and runs on "
+                "any Docker host (Railway, Render, Koyeb, Fly.io, a VPS…).\n"
+            )
+            return 1
+        raise
     print(f"      -> {url}")
 
     print(f"[1/5] Creating (or reusing) private backup dataset {backup_repo}…")
