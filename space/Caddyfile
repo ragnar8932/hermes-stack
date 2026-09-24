@@ -1,4 +1,6 @@
-:7860 {
+:{$PORT:7860} {
+        # Render injects $PORT (default 10000); HF Spaces expects 7860.
+        # {$PORT:7860} keeps ONE image working on both platforms.
         encode zstd gzip
 
         # ---- global hygiene headers (2026-style hardening) ----

@@ -53,10 +53,10 @@ RUN chmod +x /opt/hfkit-kit/*.sh /opt/hfkit-kit/cont-init.d/*.sh \
 # Hermes state lives in /opt/data (official image contract)
 RUN mkdir -p /opt/data /opt/data/logs
 
-# HF pings the app port; /healthz lets our own keep-alive Action verify
-# the full front proxy is alive without spamming the real services.
+# Render injects $PORT at runtime; HF Spaces expects 7860.
+# ${PORT:-7860} keeps one image working on both platforms.
 HEALTHCHECK --interval=60s --timeout=10s --start-period=180s --retries=3 \
-    CMD curl -fsS -o /dev/null http://127.0.0.1:7860/healthz || exit 1
+    CMD sh -c 'curl -fsS -o /dev/null http://127.0.0.1:${PORT:-7860}/healthz || exit 1'
 
 # Default: start the supervised Telegram/Discord gateway.
 # s6 still supervises the gateway; our services are started by cont-init.

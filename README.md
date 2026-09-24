@@ -1,9 +1,11 @@
 <div align="center">
 
-# 🛰️ Hermes Stack — One-Click AI Server on Hugging Face
+# 🛰️ Hermes Stack — One-Click AI Server (Render Free or Hugging Face)
 
-**Turn one free Hugging Face Space into a real personal AI server:**
+**Turn one free host into a real personal AI server:**
 [Hermes Agent](https://github.com/NousResearch/hermes-agent) + [9Router](https://github.com/decolua/9router) + [OmniRouter](https://github.com/Godde3s/omnirouter) — with a web dashboard, an OpenAI-compatible API, Telegram control, hourly backups and auto keep-alive.
+
+> **No credit card?** Deploy on **Render Free** (0.1 CPU / 512 MB, 750 h/month, no card) with the included [`render.yaml`](render.yaml) Blueprint — full guide: **[docs/render-deploy.md](docs/render-deploy.md)** (فارسی). HF Spaces now needs PRO for Docker Spaces, so Render is the recommended free path.
 
 [![Deploy](https://img.shields.io/badge/Deploy%20in%205%20min-Wizard_F5B301?style=for-the-badge&labelColor=201A14)](https://godde3s.github.io/hermes-stack/deploy.html)
 [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/Godde3s/hermes-stack/deploy-to-hf.yml?style=flat-square&label=deploy)](https://github.com/Godde3s/hermes-stack/actions/workflows/deploy-to-hf.yml)
@@ -39,9 +41,22 @@ Plus, built in:
 - **Server-style customization** — `EXTRA_PIP_PACKAGES`, `EXTRA_APT_PACKAGES`, `EXTRA_NPM_PACKAGES`, `STARTUP_SCRIPT` + a persistent `/opt/data/hfkit-boot.sh` that survives restarts and is replayed at every boot.
 - **Rebuild-from-nothing** — if a Space is ever disabled, the backup dataset restores your full state into a fresh Space in minutes.
 
-## 🚀 Deploy — 3 ways (pick one)
+## 🚀 Deploy — pick your host
 
-### Way 1 — Web Wizard (easiest, Railway-style) ⭐
+### Way 1 — Render Free (recommended, no credit card) ⭐
+
+1. Fork this repo to your GitHub.
+2. In the [Render dashboard](https://dashboard.render.com): **New → Blueprint** → select your fork. Render reads [`render.yaml`](render.yaml) (Free plan, Frankfurt, Docker from `./space/Dockerfile`, health check `/healthz`).
+3. Fill the prompted secrets (see the table below) → **Apply** → wait 10–25 min for the first build.
+4. Add repo secret `RENDER_APP_URL` = your service URL (e.g. `https://hermes-stack.onrender.com`) so the `💓 Keep App Awake` workflow pings `/healthz` every 10 min (Render sleeps free services after ~15 min idle).
+
+Full Persian walkthrough: **[docs/render-deploy.md](docs/render-deploy.md)**. Slim-mode note: on 512 MB RAM, OmniRouter stays off by default (`OMNI_ENABLED=false`) and the Next.js heap is capped — use free models from the 9Router dashboard.
+
+### Way 2 — Hugging Face Space (needs PRO for Docker now)
+
+HF removed free Docker hosting (HTTP 402) — only Static Spaces stay free. If you have PRO (~$9/mo at [huggingface.co/pro](https://huggingface.co/pro)), the old paths still work:
+
+#### Way 2a — Web Wizard (easiest, Railway-style)
 
 1. Open **[the Deploy Wizard](https://godde3s.github.io/hermes-stack/deploy.html)**.
 2. Paste your GitHub PAT, Hugging Face **write** token and Telegram bot token — the wizard validates all of them live, generates strong passwords for you, creates the repo secrets, and starts the deploy.
@@ -49,7 +64,7 @@ Plus, built in:
 
 > The wizard is 100% client-side (static page). Your tokens never leave your browser except to the official GitHub / Hugging Face / Telegram APIs.
 
-### Way 2 — GitHub only (no wizard)
+### Way 2b — GitHub only (no wizard)
 
 1. Click **[Use this template](https://github.com/Godde3s/hermes-stack/generate)** → creates your own copy.
 2. In your new repo: **Settings → Secrets and variables → Actions**, add:
@@ -65,13 +80,17 @@ Plus, built in:
 3. **Actions → Deploy to Hugging Face Space → Run workflow** (leave dry-run unchecked).
 4. Wait ~15–25 min for the first build. Your URLs appear in the run summary.
 
-### Way 3 — Manual (huggingface-cli)
+### Way 2c — Manual (huggingface-cli)
 
 Follow **[docs/manual-deploy.md](docs/manual-deploy.md)**: create the Space by hand, add secrets in the UI, push `space/` with `huggingface-cli upload`.
 
-## 🔐 Configuration reference
+## 🔐 Configuration reference (same on Render and HF)
 
-**Secrets** (Settings → Variables and secrets → *Secrets*) — set only what you use, never leave optional ones empty:
+> On Render, `HF_TOKEN` is only used for hourly state backups to your private
+> HF dataset (the app itself runs on Render). `BACKUP_REPO` format is the same:
+> `<hf-user>/<dataset>`. Set `OMNI_ENABLED=false` on Render Free (512 MB).
+
+**Secrets** (Render dashboard prompts / HF Settings → Variables and secrets → *Secrets*) — set only what you use, never leave optional ones empty:
 
 | Secret | Required | Purpose |
 |---|---|---|
@@ -89,11 +108,11 @@ Follow **[docs/manual-deploy.md](docs/manual-deploy.md)**: create the Space by h
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `HERMES_MODEL` | — | Default model id, e.g. `gemini-2.5-flash` via the keyless router |
+| `HERMES_MODEL` | — | Default model id from the 9Router dashboard tab Models (on Render Free use a 9Router model — OmniRouter is off by default) |
 | `BACKUP_REPO` | `<user>/<space>-backup` | Private dataset for backups (auto-created) |
 | `HERMES_TIMEZONE` | `Asia/Tehran` | Agent timezone |
 | `HERMES_WEB_BACKEND` | `tavily` | Web-search backend (`tavily` keyless works out of the box) |
-| `OMNI_ENABLED` | `true` | Run the keyless-model router |
+| `OMNI_ENABLED` | `true` | Run the keyless-model router — set `false` on Render Free (512 MB); HF/PRO default `true` |
 | `EXTRA_PIP_PACKAGES` / `EXTRA_APT_PACKAGES` / `EXTRA_NPM_PACKAGES` | — | Space-separated packages installed at every boot |
 | `STARTUP_SCRIPT` | — | Bash snippet run at every boot |
 
@@ -139,7 +158,8 @@ This project is designed to be a **good tenant** of the free tier — that is wh
 
 | Symptom | Cause & fix |
 |---|---|
-| Workflow fails with **HTTP 402 Payment Required** at step 1 | HF now requires a **PRO** subscription for Docker/Gradio Spaces on free `cpu-basic` (only Static Spaces are free). Subscribe at [huggingface.co/pro](https://huggingface.co/pro) and re-run, or host the `space/` Docker image elsewhere (Railway / Render / Koyeb / VPS) |
+| Workflow fails with **HTTP 402 Payment Required** at step 1 | HF now requires a **PRO** subscription for Docker/Gradio Spaces on free `cpu-basic` (only Static Spaces are free). Subscribe at [huggingface.co/pro](https://huggingface.co/pro) and re-run, **or deploy free on Render (no card) — see [docs/render-deploy.md](docs/render-deploy.md)** |
+| Render service `Out of memory` / restarts | 512 MB free RAM — keep `OMNI_ENABLED=false`, don't set `EXTRA_*` packages, heap is capped at 256 MB for the router |
 | Build fails at Caddy/OmniRouter download | Transient network error — **Factory rebuild** the Space (Settings) or just re-run the deploy workflow |
 | Space builds but shows "Runtime error" | Open **Logs** on the Space page; usually a missing secret — check the table above |
 | Bot silent in Telegram | 1) Token wrong? 2) `TELEGRAM_ALLOWED_USERS` missing your ID? 3) Restart the Space after adding secrets |
@@ -151,9 +171,10 @@ This project is designed to be a **good tenant** of the free tier — that is wh
 
 ## 📚 Docs
 
+- [Render deploy — no card, free (فارسی)](docs/render-deploy.md) — recommended free path
 - [Landing page](https://godde3s.github.io/hermes-stack/) — visual overview
-- [Deploy wizard](https://godde3s.github.io/hermes-stack/deploy.html) — guided setup
-- [Manual deploy (فارسی)](docs/manual-deploy.md)
+- [Deploy wizard](https://godde3s.github.io/hermes-stack/deploy.html) — guided HF setup (needs PRO for Docker now)
+- [Manual HF deploy (فارسی)](docs/manual-deploy.md)
 - [Upstream docs](https://github.com/NousResearch/hermes-agent) · [9Router](https://github.com/decolua/9router) · [OmniRouter](https://github.com/Godde3s/omnirouter)
 
 ## 🙏 Credits
@@ -170,7 +191,9 @@ MIT — see [LICENSE](LICENSE). Upstream projects keep their own licenses.
 
 ## 🇮🇷 راهنمای فارسی (خلاصه)
 
-**در ۵ دقیقه:** به [ویزارد استقرار](https://godde3s.github.io/hermes-stack/deploy.html) برو ← توکن GitHub، توکن Write هاگین‌فیس و توکن ربات تلگرام را وارد کن ← ویزارد همه Secrets را می‌سازد و دیپلوی را شروع می‌کند. بعد از سبز شدن اکشن، آدرس‌های سرویس‌ها در خلاصه‌ی ران هست.
+> **بدون کارت؟** هاگینگ‌فیس Docker رایگان را برداشته (ارور `402`) — مسیر پیشنهادی **[دیپلوی روی Render](docs/render-deploy.md)** است: بدون کارت، پلن Free، با Blueprint همین ریپو. مراحل: Fork → در Render گزینه New → Blueprint → پر کردن سکرت‌ها → صبر برای بیلد اول (۱۰–۲۵ دقیقه) → ست کردن سکرت `RENDER_APP_URL` برای keep-alive.
+
+**مسیر HF (نیازمند PRO):** به [ویزارد استقرار](https://godde3s.github.io/hermes-stack/deploy.html) برو ← توکن GitHub، توکن Write هاگین‌فیس و توکن ربات تلگرام را وارد کن ← ویزارد همه Secrets را می‌سازد و دیپلوی را شروع می‌کند. بعد از سبز شدن اکشن، آدرس‌های سرویس‌ها در خلاصه‌ی ران هست.
 
 **آدرس‌ها:** داشبورد روتر `/` · API روتر `/v1` · داشبورد ایجنت `/hermes/` · API ایجنت `/hermes-api/v1`
 

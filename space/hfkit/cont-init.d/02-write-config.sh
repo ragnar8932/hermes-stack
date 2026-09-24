@@ -78,7 +78,16 @@ DASH_SECRET="$(cat "$H/.dash_secret")"
     echo "HERMES_DASHBOARD_BASIC_AUTH_USERNAME=${DASHBOARD_USERNAME}"
     echo "HERMES_DASHBOARD_BASIC_AUTH_PASSWORD=${DASHBOARD_PASSWORD}"
     echo "HERMES_DASHBOARD_BASIC_AUTH_SECRET=${DASH_SECRET}"
-    echo "HERMES_DASHBOARD_PUBLIC_URL=https://${SPACE_HOST:-localhost}/hermes/"
+    # Public base URL: Render exposes RENDER_EXTERNAL_URL (e.g.
+    # https://hermes-stack.onrender.com); HF Spaces uses SPACE_HOST.
+    _PUBLIC_HOST="${RENDER_EXTERNAL_URL:-}"
+    if [ -z "$_PUBLIC_HOST" ] && [ -n "${SPACE_HOST:-}" ]; then
+        _PUBLIC_HOST="https://${SPACE_HOST}"
+    fi
+    if [ -z "$_PUBLIC_HOST" ] && [ -n "${RENDER_EXTERNAL_HOSTNAME:-}" ]; then
+        _PUBLIC_HOST="https://${RENDER_EXTERNAL_HOSTNAME}"
+    fi
+    echo "HERMES_DASHBOARD_PUBLIC_URL=${_PUBLIC_HOST:-http://localhost:7860}/hermes/"
   else
     echo "HERMES_DASHBOARD=0"
   fi

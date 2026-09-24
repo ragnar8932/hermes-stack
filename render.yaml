@@ -1,0 +1,60 @@
+services:
+  # Hermes Stack on Render Free (no credit card required)
+  # Deploy: Dashboard -> New -> Blueprint -> select this repo.
+  # Secrets are prompted in the dashboard (sync: false) — never hardcode them here.
+  - type: web
+    name: hermes-stack
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./space/Dockerfile
+    dockerContext: ./space
+    healthCheckPath: /healthz
+    # Render injects $PORT automatically (default 10000).
+    # Caddy listens on {$PORT:7860} so the same image works on HF (7860) and Render ($PORT).
+    envVars:
+      # ---- slim mode for 512 MB free RAM (recommended) ----
+      # OmniRouter (~keyless models) costs extra RAM. Start WITHOUT it;
+      # enable later from dashboard if the service is stable.
+      - key: OMNI_ENABLED
+        value: "false"
+      - key: HERMES_TIMEZONE
+        value: Asia/Tehran
+      - key: HERMES_WEB_BACKEND
+        value: tavily
+      - key: BACKUP_INTERVAL
+        value: "3600"
+      # ---- model / backup target (plain variables) ----
+      - key: HERMES_MODEL
+        sync: false
+      - key: BACKUP_REPO
+        sync: false
+      # ---- secrets (dashboard prompts for values) ----
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_ALLOWED_USERS
+        sync: false
+      - key: HERMES_API_KEY
+        sync: false
+      - key: NINEROUTER_API_KEY
+        sync: false
+      - key: OMNI_ROUTER_KEY
+        sync: false
+      - key: OMNI_ADMIN_PASSWORD
+        sync: false
+      - key: ROUTER_INITIAL_PASSWORD
+        sync: false
+      - key: DASHBOARD_USERNAME
+        sync: false
+      - key: DASHBOARD_PASSWORD
+        sync: false
+      - key: HF_TOKEN
+        sync: false
+      - key: EXTRA_PIP_PACKAGES
+        sync: false
+      - key: EXTRA_APT_PACKAGES
+        sync: false
+      - key: EXTRA_NPM_PACKAGES
+        sync: false
+      - key: STARTUP_SCRIPT
+        sync: false

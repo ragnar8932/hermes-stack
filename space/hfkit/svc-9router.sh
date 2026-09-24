@@ -11,6 +11,11 @@ export DATA_DIR=/opt/data/9router
 export NODE_ENV=production
 export NEXT_TELEMETRY_DISABLED=1
 
+# Slim default for 512 MB hosts (Render Free): cap the Next.js heap so the
+# router cannot eat the whole box. Override with NODE_OPTIONS="" if you
+# run on a bigger machine.
+export NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=256}"
+
 # API key enforcement on /v1/* (you create the key in the dashboard)
 export REQUIRE_API_KEY="${REQUIRE_API_KEY:-true}"
 # HTTPS in front (HF edge) -> Secure auth cookie
